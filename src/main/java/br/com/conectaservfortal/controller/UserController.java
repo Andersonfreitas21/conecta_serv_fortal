@@ -5,7 +5,6 @@ import br.com.conectaservfortal.model.Usuario;
 import br.com.conectaservfortal.service.impl.UserDetailsServiceImpl;
 import jakarta.transaction.Transactional;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
