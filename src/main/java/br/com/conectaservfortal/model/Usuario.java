@@ -1,20 +1,26 @@
 package br.com.conectaservfortal.model;
 
-import br.com.conectaservfortal.controller.dto.LoginRequest;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import br.com.conectaservfortal.controller.auth.dto.LoginRequest;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Collection;
+import java.util.List;
 
-@Setter
 @Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
-@Table(name = "tb_usuarios")
-public class Usuario {
+@Table(name = "td_usuario")
+public class Usuario implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "usuario_id")
@@ -29,26 +35,61 @@ public class Usuario {
     @Column(length = 100, nullable = false)
     private String password;
 
-    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "tb_usuarios_roles",
-            joinColumns = @JoinColumn(name = "usuario_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
-    private Set<Role> roles = new HashSet<>();
-    @JsonManagedReference
-    public Set<Role> getRoles() {
-        return roles;
-    }
+    private Role role;
 
     private Tipo tipo;
 
-    public boolean isLoginCorrect(LoginRequest loginRequest, PasswordEncoder passwordEncoder) {
-        return passwordEncoder.matches(loginRequest.password(), this.password);
+    public Usuario(String name, String username, Tipo tipo) {
+        this.name = name;
+        this.username = username;
+        this.tipo = tipo;
     }
+
+    public Usuario(String name, String username, String encryptedPassword, Role role) {
+        this.name = name;
+        this.username = username;
+        this.password = encryptedPassword;
+        this.role = role;
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        if (this.role == Role.ADMIN)
+            return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"), new SimpleGrantedAuthority("ROLE_USER"));
+        else return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
+
     @Getter
     public enum Tipo {
         CONTRATANTE,
         PRESTADOR_SERVICO
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public enum Role {
+        ADMIN("admin"),
+        USER("user");
+        private String role;
     }
 }
